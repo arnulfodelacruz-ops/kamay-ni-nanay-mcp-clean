@@ -1,35 +1,60 @@
 const express = require("express");
 const cors = require("cors");
+const OpenAI = require("openai");
+require("dotenv").config();
 
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Kamay ni Nanay MCP Server Running");
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-app.get("/sse", (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
+app.get("/", (req, res) => {
+  res.send("Kamay ni Nanay AI Server Running");
+});
 
-  res.flushHeaders();
+app.post("/generate-caption", async (req, res) => {
+  try {
+    const { product, audience } = req.body;
 
-  res.write(
-    `data: ${JSON.stringify({
-      status: "connected",
-      app: "Kamay ni Nanay MCP",
-    })}\n\n`
-  );
+    const prompt = `
+Create a high-converting Filipino Facebook caption for:
 
-  const interval = setInterval(() => {
-    res.write(`: ping\n\n`);
-  }, 15000);
+Product: ${product}
+Audience: ${audience}
 
-  req.on("close", () => {
-    clearInterval(interval);
-  });
+Include:
+- emotional hook
+- short storytelling
+- CTA
+- hashtags
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    res.json({
+      success: true,
+      caption: response.choices[0].message.content,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
