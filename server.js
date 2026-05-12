@@ -1,5 +1,5 @@
-import express from "express";
-import cors from "cors";
+const express = require("express");
+const cors = require("cors");
 
 const app = express();
 
@@ -18,14 +18,14 @@ app.get("/sse", (req, res) => {
 
   res.write(
     `data: ${JSON.stringify({
-      type: "message",
-      content: "Kamay ni Nanay MCP Connected",
+      status: "connected",
+      app: "Kamay ni Nanay MCP",
     })}\n\n`
   );
 
   const interval = setInterval(() => {
-    res.write(`: heartbeat\n\n`);
-  }, 30000);
+    res.write(`: ping\n\n`);
+  }, 15000);
 
   req.on("close", () => {
     clearInterval(interval);
@@ -35,5 +35,5 @@ app.get("/sse", (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`MCP server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
